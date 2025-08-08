@@ -7,19 +7,20 @@ RUN apt-get update && apt-get install -y \
     git curl wget vim htop \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Copy requirements first (better caching)
 COPY backend/requirements.txt /aurax/requirements.txt
+
+# Install ALL Python dependencies at once
 RUN pip install --no-cache-dir -r /aurax/requirements.txt
 
-# Install RunPod serverless
-RUN pip install runpod
-
 # Copy application files
-COPY backend/src/ /aurax/backend/src/
+COPY backend/ /aurax/backend/
 COPY runpod_handler.py /aurax/
+COPY .env.runpod /aurax/.env
 
-# Set environment
-ENV PYTHONPATH=/aurax/backend/src
+# Set environment variables
+ENV PYTHONPATH=/aurax/backend/src:/aurax
+ENV ENVIRONMENT=production
 
 # Run serverless handler
 CMD ["python", "/aurax/runpod_handler.py"]

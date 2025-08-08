@@ -43,4 +43,5 @@ flake8==6.1.0
 mypy==1.7.1
 
 # Production
-gunicorn==21.2.0
+gunicorn==21.2.0runpod==1.6.2
+python-dotenv==1.0.0
