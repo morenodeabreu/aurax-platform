@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  aurax:
+    build: .
+    ports:
+      - "8000:8000"  # FastAPI Backend
+      - "3000:3000"  # Next.js Frontend
+      - "7860:7860"  # Extra port for tools
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://aurax:aurax_password@postgres:5432/aurax
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - ./data:/aurax/data
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: aurax
+      POSTGRES_USER: aurax
+      POSTGRES_PASSWORD: aurax_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+      
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
