@@ -33,6 +33,7 @@ jobs:
     - name: Install RunPod CLI via pip
       run: |
         pip install runpod
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
         
     - name: Deploy to RunPod
       run: |
