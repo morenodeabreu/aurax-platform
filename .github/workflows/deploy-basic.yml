@@ -30,9 +30,13 @@ jobs:
         echo "ENVIRONMENT=${{ inputs.environment }}" >> .env
         echo "DEBUG=false" >> .env
         
+    - name: Install RunPod CLI
+      run: |
+        curl -sSL https://runpod-pub.s3.amazonaws.com/cli/runpodctl.sh | bash
+        
     - name: Deploy to RunPod
       run: |
-        pip install runpod
+        export PATH=$PATH:/usr/local/bin
         runpodctl deploy \
           --name aurax-platform \
           --gpu 48GB \
