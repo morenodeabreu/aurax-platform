@@ -1,0 +1,53 @@
+name: Basic Deploy AURAX
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: "production"
+        type: choice
+        options:
+        - production
+        - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup environment variables
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+        echo "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" >> .env
+        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+        echo "ENVIRONMENT=${{ inputs.environment }}" >> .env
+        echo "DEBUG=false" >> .env
+        
+    - name: Deploy to RunPod
+      run: |
+        pip install runpod
+        runpodctl deploy \
+          --name aurax-platform \
+          --gpu 48GB \
+          --port 8000 \
+          --disk 100GB \
+          --env-file .env \
+          --endpoint-type queue
+        
+    - name: Wait for deployment
+      run: |
+        echo "Aguardando 120 segundos para o deploy completar..."
+        sleep 120
+        
+    - name: Deployment Summary
+      run: |
+        echo "✅ Deploy básico concluído!"
+        echo "📍 URL: https://aurax-platform.runpod.net"
+        echo "🔗 Próximo passo: Implementar backend endpoints"
