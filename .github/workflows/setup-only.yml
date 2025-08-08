@@ -1,0 +1,45 @@
+name: Setup AURAX Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+        - production
+        - staging
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup environment variables
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+        echo "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" >> .env
+        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+        echo "ENVIRONMENT=${{ inputs.environment }}" >> .env
+        echo "DEBUG=false" >> .env
+        
+    - name: Show environment file
+      run: |
+        echo "=== Environment Variables Ready ==="
+        cat .env
+        echo ""
+        echo "=== Next Steps ==="
+        echo "1. Go to RunPod dashboard"
+        echo "2. Create new endpoint with these specs:"
+        echo "   - Name: aurax-platform"
+        echo "   - GPU: 48GB"
+        echo "   - Port: 8000"
+        echo "   - Disk: 100GB"
+        echo "   - Use the .env file above for environment variables"
+        echo "3. Deploy your application manually"
