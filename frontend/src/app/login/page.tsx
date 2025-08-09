@@ -2,24 +2,36 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { authManager } from '@/lib/auth'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
+    setError('')
+
     try {
-      // Placeholder para integração real com backend
-      setTimeout(() => {
-        console.log('Login attempt:', { email, password })
-        setIsLoading(false)
-      }, 1000)
+      await authManager.login(formData.email, formData.password)
+      router.push('/dashboard')
     } catch (error) {
-      console.error('Login error:', error)
+      setError('Invalid email or password')
+    } finally {
       setIsLoading(false)
     }
   }
@@ -33,15 +45,22 @@ export default function LoginPage() {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-900 border border-red-700 text-red-100 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+          
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
               Email
             </label>
             <input
               id="email"
+              name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={handleChange}
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="you@example.com"
               required
@@ -54,9 +73,10 @@ export default function LoginPage() {
             </label>
             <input
               id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleChange}
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
               required
