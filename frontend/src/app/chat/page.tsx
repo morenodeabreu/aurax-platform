@@ -1,33 +1,93 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Send } from 'lucide-react'
+import { chatApi } from '@/lib/api/chat'
+import { authManager } from '@/lib/auth'
+
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+}
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Array<{role: string, content: string}>>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    // Check if user is authenticated
+    setIsAuthenticated(authManager.isAuthenticated())
+    
+    // Load chat history
+    if (authManager.isAuthenticated()) {
+      loadChatHistory()
+    }
+  }, [])
+
+  const loadChatHistory = async () => {
+    try {
+      const history = await chatApi.getHistory()
+      setMessages(history.history || [])
+    } catch (error) {
+      console.error('Error loading chat history:', error)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (\!input.trim()) return
+    if (\!input.trim() || \!isAuthenticated) return
 
-    const userMessage = { role: 'user', content: input }
+    const userMessage: Message = {
+      role: 'user',
+      content: input,
+      timestamp: new Date().toISOString()
+    }
+    
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
 
     try {
-      // Placeholder para integração real com backend
-      setTimeout(() => {
-        const botMessage = { role: 'assistant', content: 'This is a placeholder response. Backend integration coming soon\!' }
-        setMessages(prev => [...prev, botMessage])
-        setIsLoading(false)
-      }, 1000)
+      const response = await chatApi.sendMessage(input)
+      
+      const botMessage: Message = {
+        role: 'assistant',
+        content: response.response,
+        timestamp: response.timestamp
+      }
+      
+      setMessages(prev => [...prev, botMessage])
     } catch (error) {
       console.error('Error sending message:', error)
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
     }
+  }
+
+  if (\!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+        <div className="text-center text-white">
+          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+          <p className="text-gray-400 mb-6">Please sign in to access the chat</p>
+          <a
+            href="/login"
+            className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Sign In
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -35,8 +95,17 @@ export default function ChatPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="bg-gray-800 rounded-lg shadow-xl h-[calc(100vh-8rem)] flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-4 border-b border-gray-700 flex justify-between items-center">
             <h1 className="text-2xl font-bold text-white">Chat</h1>
+            <button
+              onClick={() => {
+                authManager.logout()
+                window.location.href = '/login'
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Logout
+            </button>
           </div>
           
           {/* Messages */}
