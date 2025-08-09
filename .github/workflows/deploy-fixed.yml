@@ -1,0 +1,54 @@
+name: Deploy AURAX - Fixed PATH
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+        - production
+        - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup environment variables
+      run: |
+        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+        echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+        echo "SUPABASE_SERVICE_KEY=${{ secrets.SUPABASE_SERVICE_KEY }}" >> .env
+        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+        echo "ENVIRONMENT=${{ inputs.environment }}" >> .env
+        echo "DEBUG=false" >> .env
+        
+    - name: Install RunPod and Deploy
+      run: |
+        pip install runpod
+        echo "Finding runpodctl location..."
+        find $HOME -name "runpodctl" 2>/dev/null
+        export PATH=$PATH:$HOME/.local/bin
+        echo "PATH updated: $PATH"
+        which runpodctl || echo "runpodctl not found in PATH"
+        runpodctl --version || echo "Cannot run runpodctl"
+        
+    - name: Show environment for manual deploy
+      run: |
+        echo "=== Environment Variables Ready ==="
+        cat .env
+        echo ""
+        echo "=== Manual Deploy Instructions ==="
+        echo "1. Go to https://www.runpod.io/console"
+        echo "2. Create endpoint with:"
+        echo "   - Name: aurax-platform"
+        echo "   - GPU: 48GB"
+        echo "   - Port: 8000"
+        echo "   - Disk: 100GB"
+        echo "   - Use .env file above for environment variables"
