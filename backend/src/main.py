@@ -8,7 +8,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 import structlog
 
-from .routers import auth, chat, users, providers
+from .routers import auth, chat, users, providers, llm
 from .utils.config import get_settings
 from .utils.database import init_db
 
@@ -79,6 +79,7 @@ app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(providers.router, prefix="/providers", tags=["Providers"])
+app.include_router(llm.router, prefix="/llm", tags=["LLM Integration"])
 
 
 @app.get("/")
@@ -117,3 +118,4 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
+
